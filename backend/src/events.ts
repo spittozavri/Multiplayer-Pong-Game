@@ -9,4 +9,5 @@ export enum ServerEvents {
 export enum ClientEvents {
   PADDLE_MOVE = 'movePaddle',
   START_GAME = 'startGame',
+  RESTART_GAME = 'restartGame',
 } 

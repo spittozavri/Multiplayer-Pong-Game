@@ -12,9 +12,13 @@ function GamePage() {
     (clientGameState.winnerId === localPlayerId ? 'You Win!' : 'Opponent Wins!')
     : null;
 
+  // Get the player's role
+  const playerRole = clientGameState?.players.find(p => p.id === localPlayerId)?.role;
+  const playerNumber = playerRole === 'player1' ? 'Player 1' : 'Player 2';
+
   return (
     <div className="game-page">
-      <h2>Game On!</h2>
+      <h2>{playerNumber}</h2>
       {isGameOver && winner && (
         <div className="game-over-message">
           <h3>{winner}</h3>

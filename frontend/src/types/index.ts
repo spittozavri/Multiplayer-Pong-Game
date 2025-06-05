@@ -21,6 +21,14 @@ export interface PaddleState {
     score: number; // Player's score
 }
 
+// Match backend Player interface structure sent over the wire
+export interface Player {
+    id: string;
+    paddleY: number;
+    score: number;
+    role: 'player1' | 'player2'; // Add role property to match backend
+}
+
 export interface BallState {
     x: number; // X position of the ball (center)
     y: number; // Y position of the ball (center)
@@ -28,7 +36,7 @@ export interface BallState {
 
 // Client's representation of the overall game state received from the server
 export interface ClientGameState {
-    players: PaddleState[]; // Array of player paddles (now an array from backend)
+    players: Player[]; // Array of Player objects (now includes role)
     ball: BallState;
     isPlaying: boolean;
     isGameOver: boolean;

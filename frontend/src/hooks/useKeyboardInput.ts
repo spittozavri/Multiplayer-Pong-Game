@@ -31,8 +31,10 @@ export const useKeyboardInput = () => {
                 // Player 2 (right paddle) uses Up/Down arrows
                 if (event.key === 'ArrowUp') {
                     direction = 'up';
+                    event.preventDefault(); // Prevent default page scroll
                 } else if (event.key === 'ArrowDown') {
                     direction = 'down';
+                    event.preventDefault(); // Prevent default page scroll
                 }
             }
 

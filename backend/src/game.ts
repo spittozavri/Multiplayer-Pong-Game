@@ -39,6 +39,7 @@ export class Game {
                 id: id,
                 paddleY: CANVAS_HEIGHT / 2 - PADDLE_HEIGHT / 2,
                 score: 0,
+                role: playerIndex === 0 ? 'player1' : 'player2',
             });
             playerIndex++;
         });
@@ -70,57 +71,83 @@ export class Game {
   public update(): void {
     if (!this.state.isPlaying || this.state.isGameOver) return;
 
+    // console.log('Game update tick'); // Log each update tick
+    // console.log('Ball initial state:', { x: this.state.ball.x, y: this.state.ball.y, vx: this.state.ball.velocityX, vy: this.state.ball.velocityY }); // Log ball state
+
     this.state.ball.x += this.state.ball.velocityX;
     this.state.ball.y += this.state.ball.velocityY;
 
-    if (this.state.ball.y <= 0 || this.state.ball.y + BALL_SIZE >= CANVAS_HEIGHT) {
+    // Ball wall collision
+    if (this.state.ball.y <= 0) {
+         this.state.ball.y = 0; // Prevent ball from going outside bounds
       this.state.ball.velocityY *= -1;
+       // console.log('Ball hit top wall');
+    } else if (this.state.ball.y + BALL_SIZE >= CANVAS_HEIGHT) {
+         this.state.ball.y = CANVAS_HEIGHT - BALL_SIZE; // Prevent ball from going outside bounds
+      this.state.ball.velocityY *= -1;
+       // console.log('Ball hit bottom wall');
     }
 
     const players = Array.from(this.state.players.values());
     players.forEach(player => {
-      const paddleLeft = player.id === players[0].id ? 0 : CANVAS_WIDTH - PADDLE_WIDTH;
+      const paddleLeft = player.role === 'player1' ? 0 : CANVAS_WIDTH - PADDLE_WIDTH;
       const paddleRight = paddleLeft + PADDLE_WIDTH;
       const paddleTop = player.paddleY;
       const paddleBottom = player.paddleY + PADDLE_HEIGHT;
 
+      // Ball paddle collision
       if (
         this.state.ball.x + BALL_SIZE >= paddleLeft &&
         this.state.ball.x <= paddleRight &&
         this.state.ball.y + BALL_SIZE >= paddleTop &&
         this.state.ball.y <= paddleBottom
       ) {
+           // console.log(`Ball hit ${player.role}'s paddle. Ball: (${this.state.ball.x}, ${this.state.ball.y}), Paddle: (${paddleLeft}, ${paddleTop})`); // Log collision
+
         this.state.ball.velocityX *= -1;
+        // Increase ball speed slightly on paddle hit
         this.state.ball.velocityX += this.state.ball.velocityX > 0 ? BALL_SPEED_INCREASE : -BALL_SPEED_INCREASE;
         this.state.ball.velocityY += this.state.ball.velocityY > 0 ? BALL_SPEED_INCREASE : -BALL_SPEED_INCREASE;
-        this.state.ball.velocityY += (Math.random() - 0.5) * 2;
-        if (this.state.ball.velocityX < 0) {
+         // Add some randomness to vertical velocity - REMOVED
+        // this.state.ball.velocityY += (Math.random() - 0.5) * 2;
+
+        // Adjust ball position to prevent sticking to paddle
+        if (this.state.ball.velocityX < 0) { // Moving left
             this.state.ball.x = paddleLeft - BALL_SIZE;
-        } else {
+        } else { // Moving right
             this.state.ball.x = paddleRight + BALL_SIZE;
         }
+         // console.log('Ball state after paddle collision response:', { x: this.state.ball.x, y: this.state.ball.y, vx: this.state.ball.velocityX, vy: this.state.ball.velocityY }); // Log ball state after collision
       }
     });
 
-    if (this.state.ball.x <= 0) {
-      const rightPlayer = players.find((p, index) => index === 1);
+    // Scoring
+    if (this.state.ball.x < 0) { // Ball went off left side
+      // Find player by role to increment score
+      const rightPlayer = players.find(p => p.role === 'player2'); 
       if (rightPlayer) {
           rightPlayer.score++;
+           // console.log(`Score for ${rightPlayer.role}! New score: ${rightPlayer.score}`); // Log score
           this.checkGameOver();
           if (!this.state.isGameOver) {
-            this.resetBall();
+            this.resetBall(); // Reset ball if game not over
           }
       }
-    } else if (this.state.ball.x + BALL_SIZE >= CANVAS_WIDTH) {
-      const leftPlayer = players.find((p, index) => index === 0);
-      if (leftPlayer) {
+    } else if (this.state.ball.x + BALL_SIZE > CANVAS_WIDTH) { // Ball went off right side
+      // Find player by role to increment score
+      const leftPlayer = players.find(p => p.role === 'player1');
+       if (leftPlayer) {
           leftPlayer.score++;
+           // console.log(`Score for ${leftPlayer.role}! New score: ${leftPlayer.score}`); // Log score
           this.checkGameOver();
            if (!this.state.isGameOver) {
-            this.resetBall();
+            this.resetBall(); // Reset ball if game not over
           }
       }
     }
+
+    // Log ball position after update
+    this.logBallPosition(); // Call the new log method
   }
 
   private checkGameOver(): void {
@@ -130,7 +157,7 @@ export class Game {
               this.state.isPlaying = false;
               this.state.isGameOver = true;
               this.state.winnerId = player.id;
-              this.stopGame();
+              this.stopGame(); // Stop game loop and reset on game over
           }
       });
   }
@@ -139,14 +166,26 @@ export class Game {
     const player = this.state.players.get(id);
     if (!player || !this.state.isPlaying) return;
 
+    // console.log(`movePaddle called for player ${id}, direction: ${direction}. Initial paddleY: ${player.paddleY}`); // Removed debugging log
+
     if (direction === 'up') {
-      player.paddleY = Math.max(0, player.paddleY - PADDLE_SPEED);
-    } else {
-      player.paddleY = Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, player.paddleY + PADDLE_SPEED);
+      const newPaddleY = Math.max(0, player.paddleY - PADDLE_SPEED);
+      player.paddleY = newPaddleY;
+       // console.log(`Move up logic applied. New paddleY: ${player.paddleY}`); // Removed debugging log
+    } else if (direction === 'down') {
+      const newPaddleY = Math.min(CANVAS_HEIGHT - PADDLE_HEIGHT, player.paddleY + PADDLE_SPEED);
+      player.paddleY = newPaddleY;
+       // console.log(`Move down logic applied. New paddleY: ${player.paddleY}`); // Removed debugging log
     }
+     // console.log(`movePaddle finished for player ${id}. Final paddleY: ${player.paddleY}`); // Removed debugging log
   }
 
   getState(): GameState {
     return this.state;
   }
+
+  // Add a log to show ball position after update
+   logBallPosition(): void {
+      // console.log(`Backend Game Update End: Ball pos (${this.state.ball.x.toFixed(2)}, ${this.state.ball.y.toFixed(2)})`);
+   }
 } 

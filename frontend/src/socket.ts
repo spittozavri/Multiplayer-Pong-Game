@@ -11,71 +11,72 @@ const SOCKET_SERVER_URL = 'http://localhost:3000';
 let socket: Socket | null = null;
 
 export const initializeSocket = (): Socket => {
-  console.log('Attempting to initialize socket connection...');
-  // Get store actions outside of the event listeners to avoid stale closures
-  const { setPlayerRole, setRoomId, setPhase, reset, setClientGameState, setLocalPlayerId, setIsGameReady } = useGameStore.getState(); // Get setIsGameReady action
-
-  if (!socket) {
-    socket = io(SOCKET_SERVER_URL);
-
-    socket.on('connect', () => {
-      console.log('Connected to server', socket?.id);
-      setLocalPlayerId(socket?.id || null); // Set the local player ID on connect
-      // Initial phase might transition based on player assignment
-      // setPhase(GamePhase.WAITING); // Or similar initial phase
-    });
-
-    socket.on('disconnect', (reason) => {
-      console.log('Disconnected from server:', reason);
-      // Reset game state on disconnect
-      reset();
-       // Potentially handle reconnection attempts here
-    });
-
-    socket.on('connect_error', (err) => {
-        console.error('Socket connection error:', err.message);
-         // Handle error, maybe show a message to the user
-        reset(); // Reset state on connection error
-    });
-
-    // Listen for backend events and update the store
-    socket.on(ServerEvents.PLAYER_ASSIGNED, ({ role, roomId }: { role: PlayerRole, roomId: string }) => {
-        // console.log(`Event: ${ServerEvents.PLAYER_ASSIGNED}, Role: ${role}, Room ID: ${roomId}`);
-        setPlayerRole(role);
-        setRoomId(roomId);
-        setPhase(GamePhase.WAITING); // Transition to waiting phase after role assignment
-        setIsGameReady(false); // Ensure game is not marked ready yet
-    });
-
-    socket.on(ServerEvents.GAME_READY, ({ roomId }: { roomId: string }) => {
-         console.log(`Event: ${ServerEvents.GAME_READY} received for Room ID: ${roomId}`);
-        // When game is ready (2 players in room), set isGameReady to true
-        setIsGameReady(true);
-        // The phase might remain WAITING until the game actually starts via button click and first state update.
-    });
-
-    // Listen for game state updates
-    socket.on(ServerEvents.GAME_STATE_UPDATE, (gameState: ClientGameState) => {
-        // console.log('Event: GAME_STATE_UPDATE received', gameState); // Temporarily commented out to reduce console spam
-        setClientGameState(gameState);
-        // If the game is ongoing, ensure the phase is PLAYING and set isGameReady to false
-        if (gameState.isPlaying) {
-             // console.log('GAME_STATE_UPDATE indicates game is playing, setting phase to PLAYING'); // Temporarily commented out
-             setPhase(GamePhase.PLAYING);
-             setIsGameReady(false); // Game is playing, hide start button
-        } else if (gameState.isGameOver) {
-             // console.log('GAME_STATE_UPDATE indicates game is over, setting phase to GAME_OVER'); // Temporarily commented out
-            setPhase(GamePhase.GAME_OVER);
-             setIsGameReady(false); // Game is over, start/play again button will be handled by GAME_OVER phase/component
-        } else {
-            // Game is not playing and not over (e.g., after game ready but before start click)
-            // The phase should likely be WAITING, and isGameReady should be true if gameReady was received.
-            // No explicit phase change needed here unless logic dictates otherwise.
-             // console.log('GAME_STATE_UPDATE indicates game is not playing and not over'); // Temporarily commented out
-        }
-    });
-
+  console.log('Initializing socket connection...');
+  
+  if (socket) {
+    console.log('Socket already exists, disconnecting old connection...');
+    socket.disconnect();
+    socket = null;
   }
+
+  const { setPlayerRole, setRoomId, setPhase, reset, setClientGameState, setLocalPlayerId, setIsGameReady } = useGameStore.getState();
+
+  socket = io(SOCKET_SERVER_URL, {
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000
+  });
+
+  // Log that event listeners are being set up
+  console.log('Setting up socket event listeners...');
+
+  socket.on('connect', () => {
+    console.log('Socket connected successfully. Socket ID:', socket?.id);
+    setLocalPlayerId(socket?.id || null);
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('Socket disconnected. Reason:', reason);
+    reset();
+  });
+
+  socket.on('connect_error', (err) => {
+    console.error('Socket connection error:', err.message);
+    reset();
+  });
+
+  socket.on(ServerEvents.PLAYER_ASSIGNED, ({ role, roomId }: { role: PlayerRole, roomId: string }) => {
+    console.log(`Player assigned - Role: ${role}, Room: ${roomId}`);
+    setPlayerRole(role);
+    setRoomId(roomId);
+    setPhase(GamePhase.WAITING);
+    setIsGameReady(false);
+  });
+
+  socket.on(ServerEvents.GAME_READY, ({ roomId }: { roomId: string }) => {
+    console.log(`Game ready in room: ${roomId}`);
+    setIsGameReady(true);
+  });
+
+  socket.on(ServerEvents.GAME_STATE_UPDATE, (gameState: ClientGameState) => {
+    console.log('Game state update received:', {
+      ball: { x: gameState.ball.x.toFixed(2), y: gameState.ball.y.toFixed(2) },
+      isPlaying: gameState.isPlaying,
+      isGameOver: gameState.isGameOver,
+      players: gameState.players.map(p => ({ id: p.id, role: p.role, score: p.score }))
+    });
+    
+    setClientGameState(gameState);
+    
+    if (gameState.isPlaying) {
+      setPhase(GamePhase.PLAYING);
+      setIsGameReady(false);
+    } else if (gameState.isGameOver) {
+      setPhase(GamePhase.GAME_OVER);
+      setIsGameReady(false);
+    }
+  });
+
   return socket;
 };
 
@@ -85,8 +86,8 @@ export const getSocket = (): Socket | null => {
 
 export const disconnectSocket = (): void => {
     if (socket) {
+        console.log('Disconnecting socket...');
         socket.disconnect();
         socket = null;
-        // State reset will happen on the 'disconnect' event listener
     }
 }; 

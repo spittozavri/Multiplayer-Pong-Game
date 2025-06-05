@@ -1,0 +1,58 @@
+.game-page,
+.waiting-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 4rem); /* Adjust height considering root padding */
+  padding: 1rem; /* Add some padding */
+  box-sizing: border-box;
+}
+
+.game-page h2,
+.waiting-page h2 {
+  margin-bottom: 1.5rem;
+  color: #E0E0E0; /* Brighter white for headings */
+  font-size: 2em; /* Make headings larger */
+}
+
+.game-page p,
+.waiting-page p {
+  margin-bottom: 1rem;
+  color: #B0BEC5; /* Consistent text color for paragraphs */
+}
+
+.waiting-page button {
+  margin-top: 1.5rem;
+  padding: 0.8rem 1.5rem;
+  font-size: 1rem;
+  color: #fff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.waiting-page button:hover {
+  background-color: #0056b3;
+}
+
+.game-over-message {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
+}
+
+.game-over-message h3 {
+  color: #28a745; /* Green for win, need to adjust for loss */
+  margin: 0;
+  font-size: 1.5em;
+}
+
+.game-canvas {
+  border: 2px solid #ffffff; /* White border */
+  display: block;
+  margin: 0 auto;
+} 

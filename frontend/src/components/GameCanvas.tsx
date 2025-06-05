@@ -40,9 +40,10 @@ function GameCanvas() {
 
         // Draw paddles
         clientGameState.players.forEach((player) => {
-            ctx.fillStyle = player.id === localPlayerId ? PLAYER_1_COLOR : PLAYER_2_COLOR;
+            ctx.fillStyle = player.role === 'player1' ? PLAYER_1_COLOR : PLAYER_2_COLOR;
+            const paddleX = player.role === 'player1' ? 0 : CANVAS_WIDTH - PADDLE_WIDTH;
             ctx.fillRect(
-                player.id === localPlayerId ? 0 : CANVAS_WIDTH - PADDLE_WIDTH,
+                paddleX,
                 player.paddleY,
                 PADDLE_WIDTH,
                 PADDLE_HEIGHT
@@ -65,8 +66,15 @@ function GameCanvas() {
         ctx.font = '32px Arial';
         ctx.fillStyle = SCORE_COLOR;
         ctx.textAlign = 'center';
+
+        // Find players by role to display scores
+        const player1 = clientGameState.players.find(p => p.role === 'player1');
+        const player2 = clientGameState.players.find(p => p.role === 'player2');
+
+        const scoreText = `${player1?.score || 0} - ${player2?.score || 0}`;
+
         ctx.fillText(
-            `${clientGameState.players[0]?.score || 0} - ${clientGameState.players[1]?.score || 0}`,
+            scoreText,
             CANVAS_WIDTH / 2,
             50
         );
@@ -77,11 +85,7 @@ function GameCanvas() {
             ref={canvasRef}
             width={CANVAS_WIDTH}
             height={CANVAS_HEIGHT}
-            style={{
-                border: '2px solid #fff',
-                display: 'block',
-                margin: '0 auto',
-            }}
+            className="game-canvas"
         />
     );
 }

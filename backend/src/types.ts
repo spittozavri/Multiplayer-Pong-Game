@@ -5,6 +5,7 @@ export interface Player {
   id: string;
   paddleY: number;
   score: number;
+  role: 'player1' | 'player2';
 }
 
 export interface GameState {

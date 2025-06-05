@@ -5,5 +5,5 @@ export const BALL_SPEED = 5;
 export const BALL_SIZE = 10;
 export const CANVAS_WIDTH = 800;
 export const CANVAS_HEIGHT = 600;
-export const WINNING_SCORE = 20;
+export const WINNING_SCORE = 2;
 export const BALL_SPEED_INCREASE = 0.5; 
