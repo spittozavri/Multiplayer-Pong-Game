@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pong Test Client</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            background: #000;
+        }
+        #score {
+            font-family: monospace;
+            font-size: 24px;
+            margin: 10px;
+        }
+        #debug {
+            font-family: monospace;
+            font-size: 14px;
+            margin: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0 - 0</div>
+    <div id="debug">Debug: Waiting for connection...</div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:3000');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDiv = document.getElementById('score');
+        const debugDiv = document.getElementById('debug');
+
+        // Handle keyboard input
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') {
+                socket.emit('movePaddle', 'up');
+                debugDiv.textContent = 'Debug: Moving paddle up';
+            } else if (e.key === 'ArrowDown') {
+                socket.emit('movePaddle', 'down');
+                debugDiv.textContent = 'Debug: Moving paddle down';
+            }
+        });
+
+        // Handle game state updates
+        socket.on('gameState', (state) => {
+            console.log('Received game state:', state);
+            debugDiv.textContent = `Debug: Players: ${state.players.size}, Ball: (${state.ball.x}, ${state.ball.y})`;
+
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw paddles
+            ctx.fillStyle = '#fff';
+            const players = Array.from(state.players.values());
+            players.forEach((player, index) => {
+                const x = index === 0 ? 0 : canvas.width - 20;
+                ctx.fillRect(x, player.paddleY, 20, 100);
+            });
+
+            // Draw ball
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(state.ball.x, state.ball.y, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Update score
+            if (players.length === 2) {
+                scoreDiv.textContent = `Score: ${players[0].score} - ${players[1].score}`;
+            } else {
+                scoreDiv.textContent = `Waiting for opponent... (${players.length}/2 players)`;
+            }
+        });
+
+        // Connection status
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            debugDiv.textContent = 'Debug: Connected to server';
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+            debugDiv.textContent = 'Debug: Disconnected from server';
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+            debugDiv.textContent = `Debug: Connection error - ${error.message}`;
+        });
+    </script>
+</body>
+</html> 
