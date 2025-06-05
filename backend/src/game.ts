@@ -21,12 +21,13 @@ export class Game {
   private state: GameState;
   private readonly PADDLE_HEIGHT = 100;
   private readonly PADDLE_WIDTH = 20;
-  private readonly PADDLE_SPEED = 5;
+  private readonly PADDLE_SPEED = 25;
   private readonly BALL_SPEED = 5;
   private readonly BALL_SIZE = 10;
   private readonly CANVAS_WIDTH = 800;
   private readonly CANVAS_HEIGHT = 600;
   private readonly WINNING_SCORE = 5;
+  private readonly BALL_SPEED_INCREASE = 0.5;
   private gameLoop: NodeJS.Timeout | null = null;
 
   constructor() {
@@ -122,6 +123,8 @@ export class Game {
         this.state.ball.y <= paddleBottom
       ) {
         this.state.ball.velocityX *= -1;
+        this.state.ball.velocityX += this.state.ball.velocityX > 0 ? this.BALL_SPEED_INCREASE : -this.BALL_SPEED_INCREASE;
+        this.state.ball.velocityY += this.state.ball.velocityY > 0 ? this.BALL_SPEED_INCREASE : -this.BALL_SPEED_INCREASE;
         this.state.ball.velocityY += (Math.random() - 0.5) * 2;
         if (this.state.ball.velocityX < 0) {
             this.state.ball.x = paddleLeft - this.BALL_SIZE;

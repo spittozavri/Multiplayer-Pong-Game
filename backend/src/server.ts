@@ -22,6 +22,8 @@ app.use(express.static(path.join(__dirname, '..', '..', 'frontend')));
 // Broadcast game state to all clients
 setInterval(() => {
   const gameState = game.getState();
+  // Log the game state being sent
+  
   // Convert players Map to an array for sending to client
   const playersArray = Array.from(gameState.players.values());
   io.emit('gameState', { ...gameState, players: playersArray });

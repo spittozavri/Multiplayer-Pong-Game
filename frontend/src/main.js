@@ -3,14 +3,14 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreDiv = document.getElementById('score');
 const lobbyScreen = document.getElementById('lobby-screen');
-const startButton = document.getElementById('startButton'); // Get reference to the start button
+const startButton = document.getElementById('startButton');
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
 const PADDLE_WIDTH = 20;
 const PADDLE_HEIGHT = 100;
 const BALL_SIZE = 10;
-const PADDLE_SPEED = 5; // Add paddle speed constant
+const PADDLE_SPEED = 5;
 
 let localPlayerId = null;
 
@@ -20,12 +20,13 @@ canvas.height = CANVAS_HEIGHT;
 
 // Add event listener to the start button
 startButton.addEventListener('click', () => {
-    // Emit a message to the server to start the game
+    // Emit a message to the server to start or restart the game
     socket.emit('startGame');
 });
 
 // Handle keyboard input
 document.addEventListener('keydown', (e) => {
+    // Only allow paddle movement if the game is playing
     if (e.key === 'ArrowUp') {
         socket.emit('movePaddle', 'up');
     } else if (e.key === 'ArrowDown') {
@@ -37,21 +38,31 @@ document.addEventListener('keydown', (e) => {
 socket.on('gameState', (state) => {
     const players = state.players;
 
-    // Toggle lobby screen and button visibility
+    // Toggle lobby screen visibility
     if (players.length < 2) {
         lobbyScreen.style.display = 'flex';
         canvas.style.display = 'none';
-        startButton.style.display = 'none'; // Hide start button
+        startButton.style.display = 'none'; // Hide start button when waiting for opponent
         scoreDiv.textContent = `Waiting for opponent... (${players.length}/2 players)`;
     } else {
-        // Game is ready or ongoing
+        // Two or more players are connected
         lobbyScreen.style.display = 'none';
         canvas.style.display = 'block';
 
+        // Manage start button visibility and text
+        if (!state.isPlaying) {
+             startButton.style.display = 'block'; // Show button if game is not playing
+             startButton.textContent = state.isGameOver ? 'Play Again' : 'Start Game';
+        } else {
+             startButton.style.display = 'none'; // Hide button if game is playing
+        }
+
         if (state.isGameOver) {
             // Game is over
-            startButton.style.display = 'block'; // Show start button to play again
-            startButton.textContent = 'Play Again';
+
+            // Clear canvas
+             ctx.fillStyle = '#000';
+             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
             // Display winner message
             ctx.fillStyle = '#fff';
@@ -59,7 +70,9 @@ socket.on('gameState', (state) => {
             ctx.textAlign = 'center';
             const winner = players.find(p => p.id === state.winnerId);
             if (winner) {
-                ctx.fillText(`Player ${players.indexOf(winner) + 1} Wins!`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+                // Find the winner's player number based on their position in the players array
+                 const winnerPlayerNumber = players.indexOf(winner) + 1;
+                ctx.fillText(`Player ${winnerPlayerNumber} Wins!`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
             } else {
                  ctx.fillText('Game Over', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
             }
@@ -69,15 +82,23 @@ socket.on('gameState', (state) => {
 
         } else {
             // Game is ongoing
-            startButton.style.display = 'none'; // Hide start button
 
             // Clear canvas
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+            // Draw center line
+            ctx.beginPath();
+            ctx.setLineDash([10, 10]);
+            ctx.moveTo(CANVAS_WIDTH / 2, 0);
+            ctx.lineTo(CANVAS_WIDTH / 2, CANVAS_HEIGHT);
+            ctx.strokeStyle = '#fff';
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset line dash
+
             // Draw paddles and labels
             players.forEach((player, index) => {
-                ctx.fillStyle = player.id === localPlayerId ? '#007bff' : '#fff'; // Highlight local player's paddle
+                ctx.fillStyle = player.id === localPlayerId ? '#007bff' : '#fff';
                 const x = index === 0 ? 0 : CANVAS_WIDTH - PADDLE_WIDTH;
                 const y = player.paddleY;
                 ctx.fillRect(x, y, PADDLE_WIDTH, PADDLE_HEIGHT);
@@ -116,4 +137,4 @@ socket.on('disconnect', () => {
 
 socket.on('connect_error', (error) => {
     console.error('Connection error:', error);
-}); 
+});
