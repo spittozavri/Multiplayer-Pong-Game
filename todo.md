@@ -3,17 +3,17 @@
 ## Phase 1: Setup & Basic Connection
 
 ### Backend (Prompt 1)
-- [ ] Initialize Node.js/TypeScript project (`backend/`)
-- [ ] Setup `package.json` with scripts (`build`, `start`, `dev`)
-- [ ] Install dependencies (`express`, `socket.io`, `cors`, dev-deps)
-- [ ] Configure `tsconfig.json`
-- [ ] Implement `backend/src/server.ts`:
-    - [ ] Express app setup
-    - [ ] CORS configuration
-    - [ ] HTTP server creation
-    - [ ] Socket.IO server initialization
-    - [ ] Basic `connection` and `disconnect` console logs
-    - [ ] Server listens on `localhost:3001`
+- [x] Initialize Node.js/TypeScript project (`backend/`)
+- [x] Setup `package.json` with scripts (`build`, `start`, `dev`)
+- [x] Install dependencies (`express`, `socket.io`, `cors`, dev-deps)
+- [x] Configure `tsconfig.json`
+- [x] Implement `backend/src/server.ts`:
+    - [x] Express app setup
+    - [x] CORS configuration
+    - [x] HTTP server creation
+    - [x] Socket.IO server initialization
+    - [x] Basic `connection` and `disconnect` console logs
+    - [x] Server listens on `localhost:3001`
 
 ### Frontend (Prompt 2)
 - [ ] Initialize React/TypeScript project (`frontend/` using Vite)

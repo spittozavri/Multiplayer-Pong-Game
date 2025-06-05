@@ -1,24 +1,13 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer Pong</title>
-    <link rel="stylesheet" href="./src/style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div id="game-container">
-        <div id="lobby-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 600px; width: 800px; background-color: #000; color: #fff; font-size: 24px;">
-            <p>Waiting for opponent...</p>
-        </div>
-        <canvas id="gameCanvas" width="800" height="600" style="display: none;"></canvas>
-        <div id="score">Score: 0 - 0</div>
-        <button id="startButton" style="margin-top: 10px;">Start Game</button>
-    </div>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="./src/main.js"></script>
-</body>
-</html> 
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

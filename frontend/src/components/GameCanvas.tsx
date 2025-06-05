@@ -1,0 +1,89 @@
+import { useRef, useEffect } from 'react';
+import useGameStore from '../store/gameStore';
+import {
+    CANVAS_WIDTH,
+    CANVAS_HEIGHT,
+    PADDLE_WIDTH,
+    PADDLE_HEIGHT,
+    BALL_SIZE,
+    PLAYER_1_COLOR,
+    PLAYER_2_COLOR,
+    BALL_COLOR,
+    CENTER_LINE_COLOR,
+    SCORE_COLOR,
+} from '../config/constants';
+
+function GameCanvas() {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const { clientGameState, localPlayerId } = useGameStore();
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+        // Draw center line
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        ctx.moveTo(CANVAS_WIDTH / 2, 0);
+        ctx.lineTo(CANVAS_WIDTH / 2, CANVAS_HEIGHT);
+        ctx.strokeStyle = CENTER_LINE_COLOR;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        if (!clientGameState) return;
+
+        // Draw paddles
+        clientGameState.players.forEach((player) => {
+            ctx.fillStyle = player.id === localPlayerId ? PLAYER_1_COLOR : PLAYER_2_COLOR;
+            ctx.fillRect(
+                player.id === localPlayerId ? 0 : CANVAS_WIDTH - PADDLE_WIDTH,
+                player.paddleY,
+                PADDLE_WIDTH,
+                PADDLE_HEIGHT
+            );
+        });
+
+        // Draw ball
+        ctx.beginPath();
+        ctx.arc(
+            clientGameState.ball.x,
+            clientGameState.ball.y,
+            BALL_SIZE / 2,
+            0,
+            Math.PI * 2
+        );
+        ctx.fillStyle = BALL_COLOR;
+        ctx.fill();
+
+        // Draw scores
+        ctx.font = '32px Arial';
+        ctx.fillStyle = SCORE_COLOR;
+        ctx.textAlign = 'center';
+        ctx.fillText(
+            `${clientGameState.players[0]?.score || 0} - ${clientGameState.players[1]?.score || 0}`,
+            CANVAS_WIDTH / 2,
+            50
+        );
+    }, [clientGameState, localPlayerId]);
+
+    return (
+        <canvas
+            ref={canvasRef}
+            width={CANVAS_WIDTH}
+            height={CANVAS_HEIGHT}
+            style={{
+                border: '2px solid #fff',
+                display: 'block',
+                margin: '0 auto',
+            }}
+        />
+    );
+}
+
+export default GameCanvas; 
