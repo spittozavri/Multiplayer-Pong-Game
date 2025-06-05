@@ -44,41 +44,62 @@ socket.on('gameState', (state) => {
         startButton.style.display = 'none'; // Hide start button
         scoreDiv.textContent = `Waiting for opponent... (${players.length}/2 players)`;
     } else {
+        // Game is ready or ongoing
         lobbyScreen.style.display = 'none';
         canvas.style.display = 'block';
-        startButton.style.display = state.isPlaying ? 'none' : 'block'; // Show button if game not playing
-        startButton.textContent = state.isPlaying ? '' : 'Start Game'; // Set button text
 
-        // Clear canvas
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        if (state.isGameOver) {
+            // Game is over
+            startButton.style.display = 'block'; // Show start button to play again
+            startButton.textContent = 'Play Again';
 
-        // Draw paddles and labels
-        players.forEach((player, index) => {
-            ctx.fillStyle = player.id === localPlayerId ? '#007bff' : '#fff'; // Highlight local player's paddle
-            // Determine paddle position based on player index (0 for left, 1 for right)
-            const x = index === 0 ? 0 : CANVAS_WIDTH - PADDLE_WIDTH;
-            const y = player.paddleY;
-            ctx.fillRect(x, y, PADDLE_WIDTH, PADDLE_HEIGHT);
-
-            // Draw player label
+            // Display winner message
             ctx.fillStyle = '#fff';
-            ctx.font = '16px sans-serif';
-            ctx.textAlign = index === 0 ? 'left' : 'right';
-            const labelX = index === 0 ? PADDLE_WIDTH + 5 : CANVAS_WIDTH - PADDLE_WIDTH - 5;
-            const labelY = y + PADDLE_HEIGHT / 2 + 8; // Position near the middle of the paddle
-            ctx.fillText(`Player ${index + 1}`, labelX, labelY);
-        });
+            ctx.font = '40px sans-serif';
+            ctx.textAlign = 'center';
+            const winner = players.find(p => p.id === state.winnerId);
+            if (winner) {
+                ctx.fillText(`Player ${players.indexOf(winner) + 1} Wins!`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+            } else {
+                 ctx.fillText('Game Over', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+            }
 
-        // Draw ball
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(state.ball.x, state.ball.y, BALL_SIZE / 2, 0, Math.PI * 2);
-        ctx.fill();
+             // Update score display (still show final score)
+            scoreDiv.textContent = `Score: ${players[0].score} - ${players[1].score}`;
 
-        // Update score
-        // Assuming player order is consistent (player 1 on left, player 2 on right)
-        scoreDiv.textContent = `Score: ${players[0].score} - ${players[1].score}`;
+        } else {
+            // Game is ongoing
+            startButton.style.display = 'none'; // Hide start button
+
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // Draw paddles and labels
+            players.forEach((player, index) => {
+                ctx.fillStyle = player.id === localPlayerId ? '#007bff' : '#fff'; // Highlight local player's paddle
+                const x = index === 0 ? 0 : CANVAS_WIDTH - PADDLE_WIDTH;
+                const y = player.paddleY;
+                ctx.fillRect(x, y, PADDLE_WIDTH, PADDLE_HEIGHT);
+
+                // Draw player label
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px sans-serif';
+                ctx.textAlign = index === 0 ? 'left' : 'right';
+                const labelX = index === 0 ? PADDLE_WIDTH + 5 : CANVAS_WIDTH - PADDLE_WIDTH - 5;
+                const labelY = y + PADDLE_HEIGHT / 2 + 8;
+                ctx.fillText(`Player ${index + 1}`, labelX, labelY);
+            });
+
+            // Draw ball
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(state.ball.x, state.ball.y, BALL_SIZE / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Update score
+            scoreDiv.textContent = `Score: ${players[0].score} - ${players[1].score}`;
+        }
     }
 });
 

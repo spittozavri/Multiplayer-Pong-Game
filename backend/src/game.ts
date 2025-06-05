@@ -13,6 +13,8 @@ interface GameState {
     velocityY: number;
   };
   isPlaying: boolean;
+  isGameOver: boolean;
+  winnerId: string | null;
 }
 
 export class Game {
@@ -24,6 +26,7 @@ export class Game {
   private readonly BALL_SIZE = 10;
   private readonly CANVAS_WIDTH = 800;
   private readonly CANVAS_HEIGHT = 600;
+  private readonly WINNING_SCORE = 5;
   private gameLoop: NodeJS.Timeout | null = null;
 
   constructor() {
@@ -35,20 +38,22 @@ export class Game {
         velocityX: this.BALL_SPEED,
         velocityY: this.BALL_SPEED
       },
-      isPlaying: false
+      isPlaying: false,
+      isGameOver: false,
+      winnerId: null
     };
   }
 
   addPlayer(id: string): void {
+    if (this.state.players.size >= 2) return;
+
     this.state.players.set(id, {
       id,
       paddleY: this.CANVAS_HEIGHT / 2 - this.PADDLE_HEIGHT / 2,
       score: 0
     });
 
-    // Start game if we have 2 players
-    if (this.state.players.size === 2 && !this.state.isPlaying) {
-      this.startGame();
+    if (this.state.players.size === 2 && !this.state.isPlaying && !this.state.isGameOver) {
     }
   }
 
@@ -56,13 +61,24 @@ export class Game {
     this.state.players.delete(id);
     if (this.state.players.size < 2) {
       this.stopGame();
+      this.state.isGameOver = false;
+      this.state.winnerId = null;
+      this.resetBall();
+      this.state.players.forEach(player => player.score = 0);
     }
   }
 
   public startGame(): void {
-    this.state.isPlaying = true;
-    this.resetBall();
-    this.gameLoop = setInterval(() => this.update(), 1000 / 60); // 60 FPS
+    if (this.state.players.size === 2 && !this.state.isPlaying) {
+        this.state.isPlaying = true;
+        this.state.isGameOver = false;
+        this.state.winnerId = null;
+        this.state.players.forEach(player => player.score = 0);
+        this.resetBall();
+        if (this.gameLoop === null) {
+            this.gameLoop = setInterval(() => this.update(), 1000 / 60);
+        }
+    }
   }
 
   private stopGame(): void {
@@ -83,48 +99,74 @@ export class Game {
   }
 
   private update(): void {
-    if (!this.state.isPlaying) return;
+    if (!this.state.isPlaying || this.state.isGameOver) return;
 
-    // Move ball
     this.state.ball.x += this.state.ball.velocityX;
     this.state.ball.y += this.state.ball.velocityY;
 
-    // Wall collision (top and bottom)
-    if (this.state.ball.y <= 0 || this.state.ball.y >= this.CANVAS_HEIGHT) {
+    if (this.state.ball.y <= 0 || this.state.ball.y + this.BALL_SIZE >= this.CANVAS_HEIGHT) {
       this.state.ball.velocityY *= -1;
     }
 
-    // Paddle collision
     const players = Array.from(this.state.players.values());
     players.forEach(player => {
       const paddleLeft = player.id === players[0].id ? 0 : this.CANVAS_WIDTH - this.PADDLE_WIDTH;
       const paddleRight = paddleLeft + this.PADDLE_WIDTH;
+      const paddleTop = player.paddleY;
+      const paddleBottom = player.paddleY + this.PADDLE_HEIGHT;
 
       if (
         this.state.ball.x + this.BALL_SIZE >= paddleLeft &&
         this.state.ball.x <= paddleRight &&
-        this.state.ball.y + this.BALL_SIZE >= player.paddleY &&
-        this.state.ball.y <= player.paddleY + this.PADDLE_HEIGHT
+        this.state.ball.y + this.BALL_SIZE >= paddleTop &&
+        this.state.ball.y <= paddleBottom
       ) {
         this.state.ball.velocityX *= -1;
-        // Add some randomness to the bounce
         this.state.ball.velocityY += (Math.random() - 0.5) * 2;
+        if (this.state.ball.velocityX < 0) {
+            this.state.ball.x = paddleLeft - this.BALL_SIZE;
+        } else {
+            this.state.ball.x = paddleRight + this.BALL_SIZE;
+        }
       }
     });
 
-    // Score points
     if (this.state.ball.x <= 0) {
-      players[1].score++;
-      this.resetBall();
-    } else if (this.state.ball.x >= this.CANVAS_WIDTH) {
-      players[0].score++;
-      this.resetBall();
+      const rightPlayer = players.find((p, index) => index === 1);
+      if (rightPlayer) {
+          rightPlayer.score++;
+          this.checkGameOver();
+          if (!this.state.isGameOver) {
+            this.resetBall();
+          }
+      }
+    } else if (this.state.ball.x + this.BALL_SIZE >= this.CANVAS_WIDTH) {
+      const leftPlayer = players.find((p, index) => index === 0);
+      if (leftPlayer) {
+          leftPlayer.score++;
+          this.checkGameOver();
+           if (!this.state.isGameOver) {
+            this.resetBall();
+          }
+      }
     }
+  }
+
+  private checkGameOver(): void {
+      const players = Array.from(this.state.players.values());
+      players.forEach(player => {
+          if (player.score >= this.WINNING_SCORE) {
+              this.state.isPlaying = false;
+              this.state.isGameOver = true;
+              this.state.winnerId = player.id;
+              this.stopGame();
+          }
+      });
   }
 
   movePaddle(id: string, direction: 'up' | 'down'): void {
     const player = this.state.players.get(id);
-    if (!player) return;
+    if (!player || !this.state.isPlaying) return;
 
     if (direction === 'up') {
       player.paddleY = Math.max(0, player.paddleY - this.PADDLE_SPEED);
