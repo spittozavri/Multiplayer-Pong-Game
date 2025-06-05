@@ -16,8 +16,8 @@ const io = new Server(httpServer, {
 
 const game = new Game();
 
-// Serve static files
-app.use(express.static(path.join(__dirname, '..')));
+// Serve static files from the frontend directory (workspace root)
+app.use(express.static(path.join(__dirname, '..', '..', 'frontend')));
 
 // Broadcast game state to all clients
 setInterval(() => {
