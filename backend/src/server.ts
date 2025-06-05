@@ -48,6 +48,14 @@ io.on('connection', (socket) => {
   socket.on('movePaddle', (direction: 'up' | 'down') => {
     game.movePaddle(socket.id, direction);
   });
+
+  // Handle startGame event from client
+  socket.on('startGame', () => {
+    // Only start the game if there are 2 players and the game is not already playing
+    if (game.getState().players.size === 2 && !game.getState().isPlaying) {
+      game.startGame(); // Call the startGame method in the Game class
+    }
+  });
 });
 
 const PORT = process.env.PORT || 3000;

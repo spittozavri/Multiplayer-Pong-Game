@@ -59,7 +59,7 @@ export class Game {
     }
   }
 
-  private startGame(): void {
+  public startGame(): void {
     this.state.isPlaying = true;
     this.resetBall();
     this.gameLoop = setInterval(() => this.update(), 1000 / 60); // 60 FPS
